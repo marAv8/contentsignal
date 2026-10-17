@@ -19,4 +19,4 @@
 
 **Build scope:** Synthetic-data evaluation and review experience suitable for rapid portfolio demonstration. A full professional deployment requires security design, expert-labeled real-world benchmarks, integrations, and compliance work.
 
-**Demo cost control:** Production disables paid API inference server-side. Live calls are locally opt-in only using CONTENTSIGNAL_ENABLE_LIVE_API=true plus a private API key.
+**Live testing:** Local inference is opt-in. The hosted owner workspace uses Vercel Authentication with All Deployments, a production project-ID guard, and server-side secrets. Public demos must remain in separate projects with inference disabled. The per-instance call cap is best-effort rather than a durable billing limit.
