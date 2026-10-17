@@ -1,0 +1,11 @@
+import rawCases from './cases.json';
+import rawSources from './sources.json';
+import rawUpdates from './updates.json';
+import rawPolicies from './policies.json';
+import type { EditorialCase, Policy, SourceDocument, UpdateEvent } from '@/lib/types';
+export const cases = rawCases as EditorialCase[];
+export const sources = rawSources as SourceDocument[];
+export const updates = rawUpdates as UpdateEvent[];
+export const policies = rawPolicies as Policy[];
+export const caseById = (id: string) => cases.find((item) => item.id === id);
+export const sourceById = (id: string) => sources.find((item) => item.id === id);
