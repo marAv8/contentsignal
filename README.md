@@ -48,6 +48,10 @@ npm run build
 
 Tests cover evaluation metrics, source-quote checks, production enablement guards, and request origins. Verify anonymous access is blocked at both `/` and `/api/analyze` after every protection change. Then test an authorized custom submission.
 
+## Automatic deployment
+
+The private `marAv8/contentsignal` GitHub repository is connected to Vercel. Pushes to `main` deploy to production; branch pushes create previews. All Deployments authentication remains required, and preview builds cannot run paid inference.
+
 ## Files and publishing
 
 `.env.local`, `.vercel`, dependencies, and build output are ignored by Git. `.vercelignore` also excludes local secrets from direct deployment uploads. Never put a key in `.env.example`, client code, screenshots, or Git history.
