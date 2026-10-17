@@ -6,6 +6,7 @@ import { AnalysisSchema } from '@/lib/types';
 import { caseById, policies, sourceById } from '@/data';
 import { validateEvidence } from '@/lib/engine';
 import { liveApiEnabled, permittedOrigin } from '@/lib/live-access';
+import { OWNER_COOKIE, validOwnerSession } from '@/lib/owner-session';
 
 export const runtime = 'nodejs';
 // A small, process-local spend safeguard for deliberate development runs.
@@ -18,10 +19,15 @@ const InputSchema = z.union([
   z.object({ custom: z.object({ sector: z.enum(['Health','Legal','Travel','Media']), title: z.string().trim().min(4).max(160), content: z.string().trim().min(15).max(3000), sourceExcerpt: z.string().trim().min(15).max(3000) }) }),
 ]);
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production' && !await validOwnerSession(request.cookies.get(OWNER_COOKIE)?.value)) {
+    return NextResponse.json({ error: 'Live testing is reserved for the owner. Unlock it through Owner access.' }, { status: 401, headers: { 'Cache-Control': 'no-store' } });
+  }
   if (!liveApiEnabled()) {
     return NextResponse.json({ error: 'Live AI is disabled for this deployment.' }, { status: 403 });
   }
-  if (!permittedOrigin(request.url, request.headers.get('origin'), process.env.NODE_ENV === 'production')) {
+  const publicUrl = new URL(request.url);
+  if (request.headers.get('host')) publicUrl.host = request.headers.get('host')!;
+  if (!permittedOrigin(publicUrl.toString(), request.headers.get('origin'), process.env.NODE_ENV === 'production')) {
     return NextResponse.json({ error: 'Request origin is not permitted.' }, { status: 403 });
   }
   if (Number(request.headers.get('content-length') || 0) > 20000) {

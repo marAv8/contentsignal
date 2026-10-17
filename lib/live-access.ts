@@ -1,5 +1,5 @@
-// Hosted access is enforced by Vercel Authentication (All Deployments).
-// Enable this only on the protected owner workspace; never on a public demo.
+// Production inference additionally requires a verified owner session at the route.
+// The project binding limits which deployment can enable inference.
 export function liveApiEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   if (env.CONTENTSIGNAL_ENABLE_LIVE_API !== 'true') return false;
   if (env.NODE_ENV !== 'production') return true;

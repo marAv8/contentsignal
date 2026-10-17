@@ -10,6 +10,7 @@ import {
   Play, RadioTower, RefreshCw, Search, Settings2, ShieldAlert,
   ShieldCheck, Sparkles, Target, TrendingUp, TriangleAlert, X,
 } from 'lucide-react';
+import { SignalMark, WorkspaceIcon } from '@/components/workspace-icons';
 import { cases, policies, sourceById, sources, updates } from '@/data';
 import { className, demoAnalysis, impactForUpdate, ruleChecks, scoreRecords } from '@/lib/engine';
 import type { AnalysisRecord, Classification, EditorialCase, ReviewDecision, Sector } from '@/lib/types';
@@ -56,7 +57,7 @@ export default function Home() {
   const [activeUpdate, setActiveUpdate] = useState(updates[0].id);
   const [openMobile, setOpenMobile] = useState(false);
   const [showGold, setShowGold] = useState(false);
-  const [status, setStatus] = useState<{ configured: boolean; model: string } | null>(null);
+  const [status, setStatus] = useState<{ configured: boolean; model: string; owner?: boolean } | null>(null);
   const [running, setRunning] = useState<string | null>(null);
   const [feedback, setFeedback] = useState('');
   const [showIntake, setShowIntake] = useState(false);
@@ -145,16 +146,17 @@ export default function Home() {
 
   return <div className="shell">
     <aside className={`sidebar ${openMobile ? 'sidebar-open' : ''}`}>
-      <div className="brand"><div className="brand-mark"><RadioTower size={23}/></div><div><div className="brand-name">Content<span>Signal</span></div><div className="brand-sub">EDITORIAL INTELLIGENCE</div></div></div>
+      <div className="brand"><div className="brand-mark"><SignalMark/></div><div><div className="brand-name">Content<span>Signal</span></div><div className="brand-sub">EDITORIAL INTELLIGENCE</div></div></div>
       <div className="sidebar-heading">WORKSPACE</div>
       <nav className="navigation" aria-label="Primary navigation">
-        {tabs.map(item => <button key={item.id} className={`nav-item ${tab===item.id ? 'active' : ''}`} onClick={()=>navigate(item.id)}><item.icon size={17}/><span>{item.label}</span>{tab===item.id && <span className="nav-dot"/>}</button>)}
+        {tabs.map((item, index) => <button key={item.id} className={`nav-item ${tab===item.id ? 'active' : ''}`} aria-current={tab===item.id ? 'page' : undefined} onClick={()=>navigate(item.id)}><span className="nav-icon-wrap" style={{ animationDelay: `${120 + index * 65}ms` }}><WorkspaceIcon section={item.id}/></span><span>{item.label}</span>{tab===item.id && <span className="nav-dot"/>}</button>)}
       </nav>
       <div className="sidebar-spacer"/>
       <div className="sidebar-bottom">
         <div className="sidebar-heading">SYSTEM STATUS</div>
-        <div className="status-line"><span className={`status-pulse ${status?.configured ? 'online' : ''}`}/><span>{status?.configured ? 'OpenAI configured' : 'Demo mode ready'}</span></div>
-        <div className="sidebar-fine">{status?.configured ? `${status.model} · server-side only` : 'Connect an API key for live analysis'}</div>
+        <div className="status-line" role="status"><span className={`status-pulse ${status?.configured ? 'online' : ''}`}/><span>{status === null ? 'Checking API connection' : status.configured ? 'OpenAI configured' : 'Demo mode ready'}</span></div>
+        <div className="sidebar-fine">{status === null ? 'Connecting to this workspace…' : status.configured ? `${status.model} · server-side only` : 'Public demo · live testing is owner-only'}</div>
+        <a className="owner-access-link" href="/owner">{status?.owner ? 'Manage owner access' : 'Owner access'} <ArrowUpRight size={12}/></a>
         <div className="synth-note"><ShieldCheck size={16}/><span>100% synthetic content<br/>No real user or patient records</span></div>
       </div>
     </aside>
@@ -193,7 +195,7 @@ export default function Home() {
 
         {tab==='review' && <>
           <SectionHeading eyebrow="WORKFLOW 01 / EDITORIAL REVIEW" title="Evidence review desk" description="Inspect article claims alongside source excerpts and apply explicit editorial rules. Model outputs are advisory." right={<div className="head-actions"><Chip tone={status?.configured?'green':'amber'}>{status?.configured ? 'Live API available' : 'Demo baseline'}</Chip><button className="button primary" onClick={()=>setShowIntake(!showIntake)}><FileText size={15}/> {showIntake?'Close intake':'New test intake'}</button></div>}/>
-          {showIntake&&<section className="panel custom-intake"><div className="panel-header"><div><h2>Ad hoc source comparison</h2><p>Paste only fictional or properly cleared text. This is not part of the labeled benchmark.</p></div><Chip tone="purple">Experiment</Chip></div><div className="intake-form"><label>Vertical<select value={customSector} onChange={e=>setCustomSector(e.target.value as Sector)}>{(['Health','Legal','Travel','Media'] as Sector[]).map(x=><option key={x}>{x}</option>)}</select></label><label>Article title<input value={customTitle} maxLength={160} onChange={e=>setCustomTitle(e.target.value)}/></label><label>Article claim<textarea value={customContent} maxLength={3000} rows={3} onChange={e=>setCustomContent(e.target.value)}/></label><label>Reference source excerpt<textarea value={customSource} maxLength={3000} rows={3} onChange={e=>setCustomSource(e.target.value)}/></label><div className="intake-submit"><span>Submissions go to the configured OpenAI API; don't enter confidential or personal data.</span><button disabled={!status?.configured||Boolean(running)||customContent.trim().length<15||customSource.trim().length<15} className="button primary" onClick={runCustom}>{running==='custom'?<LoaderCircle size={16} className="spin"/>:<Sparkles size={16}/>} Analyze new submission</button></div>{customResult&&<div className="custom-output"><div><strong>Live result</strong><ClassChip value={customResult.analysis.classification}/><PriorityChip value={customResult.analysis.priority}/><Chip tone={customResult.evidenceVerified?'green':'red'}>{customResult.evidenceVerified?'Valid exact quote':'Invalid / missing quote'}</Chip></div><p>{customResult.analysis.rationale}</p><blockquote>{customResult.analysis.evidenceQuote||'No quoted evidence supplied'}</blockquote><small>{customResult.analysis.recommendedAction}</small></div>}</div></section>}
+          {showIntake&&<section className="panel custom-intake"><div className="panel-header"><div><h2>Ad hoc source comparison</h2><p>Paste only fictional or properly cleared text. This is not part of the labeled benchmark.</p></div><Chip tone="purple">Experiment</Chip></div><div className="intake-form"><label>Vertical<select value={customSector} onChange={e=>setCustomSector(e.target.value as Sector)}>{(['Health','Legal','Travel','Media'] as Sector[]).map(x=><option key={x}>{x}</option>)}</select></label><label>Article title<input value={customTitle} maxLength={160} onChange={e=>setCustomTitle(e.target.value)}/></label><label>Article claim<textarea value={customContent} maxLength={3000} rows={3} onChange={e=>setCustomContent(e.target.value)}/></label><label>Reference source excerpt<textarea value={customSource} maxLength={3000} rows={3} onChange={e=>setCustomSource(e.target.value)}/></label><div className="intake-submit"><span>{status?.configured ? "Submissions go to the configured OpenAI API; don't enter confidential or personal data." : 'Live tests are owner-only. Explore the demo cases without signing in.'}</span><button disabled={!status?.configured||Boolean(running)||customContent.trim().length<15||customSource.trim().length<15} className="button primary" onClick={runCustom}>{running==='custom'?<LoaderCircle size={16} className="spin"/>:<Sparkles size={16}/>} Analyze new submission</button></div>{customResult&&<div className="custom-output"><div><strong>Live result</strong><ClassChip value={customResult.analysis.classification}/><PriorityChip value={customResult.analysis.priority}/><Chip tone={customResult.evidenceVerified?'green':'red'}>{customResult.evidenceVerified?'Valid exact quote':'Invalid / missing quote'}</Chip></div><p>{customResult.analysis.rationale}</p><blockquote>{customResult.analysis.evidenceQuote||'No quoted evidence supplied'}</blockquote><small>{customResult.analysis.recommendedAction}</small></div>}</div></section>}
           <div className="review-layout">
             <section className="panel queue-panel"><div className="panel-header"><div><h2>Incoming queue</h2><p>{filtered.length} of {cases.length} records</p></div><Filter size={17} className="muted"/></div><label className="search-box"><Search size={16}/><input aria-label="Search cases" placeholder="Search by claim or ID…" value={q} onChange={e=>setQ(e.target.value)}/></label>
               <div className="filters">{sectors.map(s=><button key={s} className={`filter-button ${sector===s ? 'selected' : ''}`} onClick={()=>setSector(s)}>{s}</button>)}</div>
